@@ -15,6 +15,9 @@ contract AtomicSwapIERC20 {
     // Награда контракта
     uint256 contractRevenue;
 
+    // Общая сумма контракта
+    uint256 totalAmount;
+
     // Конструктор контракта
     constructor() {
         // Устанавливаем владельца контракта на адрес того, кто развернул контракт
@@ -41,7 +44,7 @@ contract AtomicSwapIERC20 {
             uint256 previousAmount = receivedAmounts[previousAddress];
 
             // Проверяем условие если сумма следующего сендера больше или равна предыдущего
-            if (previousAmount <= lastSenderAmount) {
+            if (previousAmount <= lastSenderAmount && previousAmount != 0) {
 
                 // Рассчитываем сумму для отправки, добавляя 80% к previousAmount
                 uint256 amountToSend = previousAmount + (previousAmount * 80 / 100);
@@ -50,10 +53,13 @@ contract AtomicSwapIERC20 {
 
                 // Отправляем эфир на адрес предыдущего отправителя
                 payable(previousAddress).transfer(amountToSend);
+
+                //Делаем неактивным адрес предыдущего отправителя
+                receivedAmounts[previousAddress] = 0;
             }
 
             // Проверяем условие если сумма следующего сендера меньше предыдущего
-            if (previousAmount > lastSenderAmount) {
+            if (previousAmount > lastSenderAmount && totalAmount >= previousAmount) {
 
                 // Рассчитываем сумму для отправки, добавляя 80% к previousAmount
                 uint256 amountToSend = previousAmount + (previousAmount * 80 / 100);
