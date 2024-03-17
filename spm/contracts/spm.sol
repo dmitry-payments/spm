@@ -51,21 +51,8 @@ contract AtomicSwapIERC20 {
             // Проверяем условие если сумма следующего сендера больше или равна предыдущего
             if (previousAmount <= lastSenderAmount && previousAmount != 0) {
 
-                // Проверяем есть ли приоритетные адреса для выплат
-                if (priorityAddresses.length > 0) {
-                    // Проходим по мапе приоритетных адресов
-                    for (address priorityAddress : priorityAddresses) {
-                        // Проверяем что общая сумма достаточна для выплаты приоритетному сендеру и награды контракта и что сендер активный
-                        if (totalAmount >= priorityAddresses[priorityAddress] * 2 && priorityAddresses[priorityAddress] != 0) {
-                            // Сумма выплаты
-                            uint256 amountToSend = priorityAddresses[priorityAddress] + (priorityAddresses[priorityAddress] * 80 / 100);
-                            // Награда контракту
-                            contractRevenue = priorityAddresses[priorityAddress] * 20 / 100;
-                            //Делаем неактивным адрес приоритетного отправителя
-                            priorityAddresses[priorityAddress] = 0;
-                        }
-                    }
-                } 
+                // Сначала проверяем нет ли приоритентных адресов для выплат
+                findPriorityAddress();
 
                 // Рассчитываем сумму для отправки, добавляя 80% к previousAmount
                 uint256 amountToSend = previousAmount + (previousAmount * 80 / 100);
@@ -80,7 +67,10 @@ contract AtomicSwapIERC20 {
             }
 
             // Проверяем условие если сумма следующего сендера меньше предыдущего, но общая сумма контракта позволяет сделать выплату
-            if (previousAmount > lastSenderAmount && totalAmount >= previousAmount) {
+            if (previousAmount > lastSenderAmount && totalAmount >= previousAmount * 2) {
+
+                // Сначала проверяем нет ли приоритентных адресов для выплат
+                findPriorityAddress();
 
                 // Рассчитываем сумму для отправки, добавляя 80% к previousAmount
                 uint256 amountToSend = previousAmount + (previousAmount * 80 / 100);
@@ -101,5 +91,25 @@ contract AtomicSwapIERC20 {
                 priorityAddresses[previousAddress] = previousAmount;
             }
         }
+    }
+
+    function findPriorityAddress() {
+        // Проверяем есть ли приоритетные адреса для выплат
+        if (priorityAddresses.length > 0) {
+            // Проходим по мапе приоритетных адресов
+            for (address priorityAddress : priorityAddresses) {
+                // Проверяем что общая сумма достаточна для выплаты приоритетному сендеру и награды контракта и что сендер активный
+                if (totalAmount >= priorityAddresses[priorityAddress] * 2 && priorityAddresses[priorityAddress] != 0) {
+                    // Сумма выплаты
+                    uint256 amountToSend = priorityAddresses[priorityAddress] + (priorityAddresses[priorityAddress] * 80 / 100);
+                    // Награда контракту
+                    contractRevenue = priorityAddresses[priorityAddress] * 20 / 100;
+                    // Отправляем эфир
+                    payable(priorityAddress).transfer(amountToSend);
+                    // Делаем неактивным адрес приоритетного отправителя
+                    priorityAddresses[priorityAddress] = 0;
+                }
+            }
+        } 
     }
 }
