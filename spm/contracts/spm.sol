@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
-contract AtomicSwapIERC20 {
+contract spm {
 
     // Адрес владельца контракта
     address public owner;
